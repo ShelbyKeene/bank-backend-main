@@ -2,7 +2,7 @@ require("dotenv").config();
 const express = require('express');
 const app = express();
 const cors = require('cors');
-const dal = require('./dal.js');
+const db = require('./db.js');
 
 // Middleware
 app.use(cors());
@@ -22,13 +22,13 @@ app.get('/', async (req, res, next) => {
 // create user account
 app.get('/account/create/:name/:email/:password', async (req, res) => {
     try {
-        const users = await dal.find(req.params.email);
+        const users = await db.find(req.params.email);
 
         if (users.length > 0) {
             console.log('User already exists');
             res.send('User already exists');
         } else {
-            const user = await dal.create(req.params.name, req.params.email, req.params.password);
+            const user = await db.create(req.params.name, req.params.email, req.params.password);
             console.log(user);
             res.send(user);
         }
@@ -40,7 +40,7 @@ app.get('/account/create/:name/:email/:password', async (req, res) => {
 // login user
 app.get('/account/login/:email/:password', async (req, res) => {
     try {
-        const user = await dal.find(req.params.email);
+        const user = await db.find(req.params.email);
 
         if (user.length > 0) {
             if (user[0].password === req.params.password) {
@@ -59,7 +59,7 @@ app.get('/account/login/:email/:password', async (req, res) => {
 // find user account
 app.get('/account/find/:email', async (req, res) => {
     try {
-        const user = await dal.find(req.params.email);
+        const user = await db.find(req.params.email);
         console.log(user);
         res.send(user);
     } catch (error) {
@@ -70,7 +70,7 @@ app.get('/account/find/:email', async (req, res) => {
 // find one user by email - alternative to find
 app.get('/account/findOne/:email', async (req, res) => {
     try {
-        const user = await dal.findOne(req.params.email);
+        const user = await db.findOne(req.params.email);
         console.log(user);
         res.send(user);
     } catch (error) {
@@ -82,7 +82,7 @@ app.get('/account/findOne/:email', async (req, res) => {
 app.get('/account/update/:email/:amount', async (req, res) => {
     try {
         const amount = Number(req.params.amount);
-        const response = await dal.update(req.params.email, amount);
+        const response = await db.update(req.params.email, amount);
         console.log(response);
         res.send(response);
     } catch (error) {
@@ -93,7 +93,7 @@ app.get('/account/update/:email/:amount', async (req, res) => {
 // all accounts
 app.get('/account/all', async (req, res) => {
     try {
-        const docs = await dal.all();
+        const docs = await db.all();
         console.log(docs);
         res.send(docs);
     } catch (error) {
