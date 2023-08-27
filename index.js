@@ -7,7 +7,9 @@ const dal     = require('./dal.js');
 // used to serve static files from public directory
 // app.use(express.static('public'));
 app.use(cors());
-
+var bodyParser = require('body-parser');
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 // create user account
 app.get('/account/create/:name/:email/:password', function (req, res) {
 
@@ -99,5 +101,6 @@ app.get('/account/all', function (req, res) {
 });
 
 let port = process.env.PORT || 3000;
-app.listen(port);
-console.log('Running on port: ' + port);
+app.listen(port, function () {
+    console.log(`Running on port ${port}`);
+});
