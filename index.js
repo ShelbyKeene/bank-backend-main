@@ -1,3 +1,4 @@
+require("dotenv").config()
 const express = require('express');
 const app     = express();
 const cors    = require('cors');
@@ -7,10 +8,28 @@ const dal     = require('./dal.js');
 // used to serve static files from public directory
 // app.use(express.static('public'));
 app.use(cors());
-var bodyParser = require('body-parser');
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
+
+
+// var bodyParser = require('body-parser');
+// app.use(bodyParser.urlencoded({ extended: false }));
+// app.use(bodyParser.json());
+
+
+
+app.get('/', async (req, res, next) => {
+    res.status(200).json({
+        uptime: process.uptime(),
+        message: 'All is well',
+        timestamp: Date.now()
+    });
+    next()
+});
+
+
 // create user account
+
+
+
 app.get('/account/create/:name/:email/:password', function (req, res) {
 
     // check if account exists
@@ -99,6 +118,10 @@ app.get('/account/all', function (req, res) {
             res.send(docs);
     });
 });
+
+
+
+
 
 let port = process.env.PORT || 3000;
 app.listen(port, function () {
