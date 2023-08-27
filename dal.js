@@ -19,7 +19,7 @@
 
 
 const MongoClient = require('mongodb').MongoClient;
-const url = process.env.MONGODB_URI; // Use the environment variable
+const url = process.env.MONGODB_URI || 'mongodb+srv://shelby:QHnd4CMyqg5lKJga@cluster1.yccoufm.mongodb.net/?retryWrites=true&w=majority'; // Use the environment variable
 let db = null;
 
 // Connect to MongoDB Atlas with useUnifiedTopology option
