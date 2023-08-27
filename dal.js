@@ -1,105 +1,82 @@
-// const MongoClient = require('mongodb').MongoClient;
-// // const url         = 'mongodb+srv://shelby:QHnd4CMyqg5lKJga@cluster1.yccoufm.mongodb.net/?retryWrites=true&w=majority';
-// let db            = null;
-// //  QHnd4CMyqg5lKJga
-
-
-// // Connect to MongoDB Atlas with useUnifiedTopology option
-// MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, client) {
-//     if (err) {
-//         console.error("Error connecting to MongoDB Atlas:", err);
-//         return;
-//     }
-//     console.log("Connected successfully to MongoDB Atlas");
-
-//     // Connect to your database (replace 'myproject' with your actual database name)
-//     db = client.db('myproject');
-// });
-
-
-
 const MongoClient = require('mongodb').MongoClient;
-const url = process.env.MONGODB_URI || 'mongodb+srv://shelby:QHnd4CMyqg5lKJga@cluster1.yccoufm.mongodb.net/?retryWrites=true&w=majority'; // Use the environment variable
+const url = process.env.MONGODB_URI || 'mongodb+srv://shelby:QHnd4CMyqg5lKJga@cluster1.yccoufm.mongodb.net/?retryWrites=true&w=majority';
 let db = null;
 
 // Connect to MongoDB Atlas with useUnifiedTopology option
-MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, client) {
-    if (err) {
-        console.error("Error connecting to MongoDB Atlas:", err);
-        return;
+(async () => {
+    try {
+        const client = await MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true });
+        console.log("Connected successfully to MongoDB Atlas");
+        db = client.db('myproject');
+    } catch (error) {
+        console.error("Error connecting to MongoDB Atlas:", error);
     }
-    console.log("Connected successfully to MongoDB Atlas");
-
-    // Connect to your database (replace 'myproject' with your actual database name)
-    db = client.db('myproject');
-});
-
-// ...rest of your code for creating, finding, and updating users
-
+})();
 
 // create user account
-function create(name, email, password){
-    return new Promise((resolve, reject) => {    
+async function create(name, email, password) {
+    try {
         const collection = db.collection('users');
-        const doc = {name, email, password, balance: 0};
-        collection.insertOne(doc, {w:1}, function(err, result) {
-            err ? reject(err) : resolve(doc);
-        });    
-    })
+        const doc = { name, email, password, balance: 0 };
+        const result = await collection.insertOne(doc);
+        return doc;
+    } catch (error) {
+        throw error;
+    }
 }
 
 // find user account
-function find(email){
-    return new Promise((resolve, reject) => {    
-        const customers = db
+async function find(email) {
+    try {
+        const customers = await db
             .collection('users')
-            .find({email: email})
-            .toArray(function(err, docs) {
-                err ? reject(err) : resolve(docs);
-        });    
-    })
+            .find({ email: email })
+            .toArray();
+        return customers;
+    } catch (error) {
+        throw error;
+    }
 }
 
-// find user account
-function findOne(email){
-    return new Promise((resolve, reject) => {    
-        const customers = db
+// find one user by email - alternative to find
+async function findOne(email) {
+    try {
+        const doc = await db
             .collection('users')
-            .findOne({email: email})
-            .then((doc) => resolve(doc))
-            .catch((err) => reject(err));    
-    })
+            .findOne({ email: email });
+        return doc;
+    } catch (error) {
+        throw error;
+    }
 }
 
 // update - deposit/withdraw amount
-function update(email, amount){
-    return new Promise((resolve, reject) => {    
-        const customers = db
-            .collection('users')            
+async function update(email, amount) {
+    try {
+        const documents = await db
+            .collection('users')
             .findOneAndUpdate(
-                {email: email},
-                { $inc: { balance: amount}},
-                { returnOriginal: false },
-                function (err, documents) {
-                    err ? reject(err) : resolve(documents);
-                }
-            );            
-
-
-    });    
+                { email: email },
+                { $inc: { balance: amount } },
+                { returnOriginal: false }
+            );
+        return documents;
+    } catch (error) {
+        throw error;
+    }
 }
 
 // all users
-function all(){
-    return new Promise((resolve, reject) => {    
-        const customers = db
+async function all() {
+    try {
+        const docs = await db
             .collection('users')
             .find({})
-            .toArray(function(err, docs) {
-                err ? reject(err) : resolve(docs);
-        });    
-    })
+            .toArray();
+        return docs;
+    } catch (error) {
+        throw error;
+    }
 }
 
-
-module.exports = {create, findOne, find, update, all};
+module.exports = { create, findOne, find, update, all };

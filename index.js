@@ -1,129 +1,107 @@
-require("dotenv").config()
+require("dotenv").config();
 const express = require('express');
-const app     = express();
-const cors    = require('cors');
-const dal     = require('./dal.js');
+const app = express();
+const cors = require('cors');
+const dal = require('./dal.js');
 
-
-// used to serve static files from public directory
-// app.use(express.static('public'));
+// Middleware
 app.use(cors());
 
-
-// var bodyParser = require('body-parser');
-// app.use(bodyParser.urlencoded({ extended: false }));
-// app.use(bodyParser.json());
-
-
-
 app.get('/', async (req, res, next) => {
-    res.status(200).json({
-        uptime: process.uptime(),
-        message: 'All is well',
-        timestamp: Date.now()
-    });
-    next()
+    try {
+        res.status(200).json({
+            uptime: process.uptime(),
+            message: 'All is well',
+            timestamp: Date.now()
+        });
+    } catch (error) {
+        next(error); // Pass the error to the error handler middleware
+    }
 });
-
 
 // create user account
+app.get('/account/create/:name/:email/:password', async (req, res) => {
+    try {
+        const users = await dal.find(req.params.email);
 
-
-
-app.get('/account/create/:name/:email/:password', function (req, res) {
-
-    // check if account exists
-    dal.find(req.params.email).
-        then((users) => {
-
-            // if user exists, return error message
-            if(users.length > 0){
-                console.log('User already in exists');
-                res.send('User already in exists');    
-            }
-            else{
-                // else create user
-                dal.create(req.params.name,req.params.email,req.params.password).
-                    then((user) => {
-                        console.log(user);
-                        res.send(user);            
-                    });            
-            }
-
-        });
+        if (users.length > 0) {
+            console.log('User already exists');
+            res.send('User already exists');
+        } else {
+            const user = await dal.create(req.params.name, req.params.email, req.params.password);
+            console.log(user);
+            res.send(user);
+        }
+    } catch (error) {
+        res.status(500).send('Internal Server Error');
+    }
 });
 
+// login user
+app.get('/account/login/:email/:password', async (req, res) => {
+    try {
+        const user = await dal.find(req.params.email);
 
-// login user 
-app.get('/account/login/:email/:password', function (req, res) {
-
-    dal.find(req.params.email).
-        then((user) => {
-
-            // if user exists, check password
-            if(user.length > 0){
-                if (user[0].password === req.params.password){
-                    res.send(user[0]);
-                }
-                else{
-                    res.send('Login failed: wrong password');
-                }
+        if (user.length > 0) {
+            if (user[0].password === req.params.password) {
+                res.send(user[0]);
+            } else {
+                res.send('Login failed: wrong password');
             }
-            else{
-                res.send('Login failed: user not found');
-            }
-    });
-    
+        } else {
+            res.send('Login failed: user not found');
+        }
+    } catch (error) {
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 // find user account
-app.get('/account/find/:email', function (req, res) {
-
-    dal.find(req.params.email).
-        then((user) => {
-            console.log(user);
-            res.send(user);
-    });
+app.get('/account/find/:email', async (req, res) => {
+    try {
+        const user = await dal.find(req.params.email);
+        console.log(user);
+        res.send(user);
+    } catch (error) {
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 // find one user by email - alternative to find
-app.get('/account/findOne/:email', function (req, res) {
-
-    dal.findOne(req.params.email).
-        then((user) => {
-            console.log(user);
-            res.send(user);
-    });
+app.get('/account/findOne/:email', async (req, res) => {
+    try {
+        const user = await dal.findOne(req.params.email);
+        console.log(user);
+        res.send(user);
+    } catch (error) {
+        res.status(500).send('Internal Server Error');
+    }
 });
 
-
 // update - deposit/withdraw amount
-app.get('/account/update/:email/:amount', function (req, res) {
-
-    var amount = Number(req.params.amount);
-
-    dal.update(req.params.email, amount).
-        then((response) => {
-            console.log(response);
-            res.send(response);
-    });    
+app.get('/account/update/:email/:amount', async (req, res) => {
+    try {
+        const amount = Number(req.params.amount);
+        const response = await dal.update(req.params.email, amount);
+        console.log(response);
+        res.send(response);
+    } catch (error) {
+        res.status(500).send('Internal Server Error');
+    }
 });
 
 // all accounts
-app.get('/account/all', function (req, res) {
-
-    dal.all().
-        then((docs) => {
-            console.log(docs);
-            res.send(docs);
-    });
+app.get('/account/all', async (req, res) => {
+    try {
+        const docs = await dal.all();
+        console.log(docs);
+        res.send(docs);
+    } catch (error) {
+        res.status(500).send('Internal Server Error');
+    }
 });
 
-
-
-
-
-let port = process.env.PORT || 3000;
+const port = process.env.PORT || 3000;
 app.listen(port, function () {
     console.log(`Running on port ${port}`);
 });
