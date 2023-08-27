@@ -2,11 +2,11 @@ const MongoClient = require('mongodb').MongoClient;
 const url         = 'mongodb+srv://shelby:QHnd4CMyqg5lKJga@cluster1.yccoufm.mongodb.net/?retryWrites=true&w=majority';
 let db            = null;
 //  QHnd4CMyqg5lKJga
-
+const uri = process.env.MONGODB_URI;
 
 
 // Connect to MongoDB Atlas with useUnifiedTopology option
-MongoClient.connect(url, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, client) {
+MongoClient.connect(uri, { useNewUrlParser: true, useUnifiedTopology: true }, function(err, client) {
     if (err) {
         console.error("Error connecting to MongoDB Atlas:", err);
         return;
