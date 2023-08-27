@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "npm install",
-    "start": "node http_server.js"
+    "start": "node index.js"
   },
   "author": "",
   "license": "",
