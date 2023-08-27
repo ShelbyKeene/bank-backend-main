@@ -4,10 +4,11 @@
   "description": "lowdb sample for 1.125",
   "main": "index.js",
   "scripts": {
-    "test": "jest"
+    "build": "npm install",
+    "start": "node http_server.js"
   },
-  "author": "abel@mit.edu",
-  "license": "MIT",
+  "author": "",
+  "license": "",
   "dependencies": {
     "cors": "^2.8.4",
     "express": "^4.16.3",
