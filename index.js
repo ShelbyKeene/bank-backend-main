@@ -1,4 +1,3 @@
-const admin = require("firebase-admin");
 const jwt = require('jsonwebtoken');
 const dotenv = require('dotenv');
 dotenv.config();
@@ -11,14 +10,7 @@ const db = require('./db.js');
 const morgan = require('morgan');
 const bcrypt = require('bcrypt');
 const { requireUser } = require('./authUtils');
-const serviceAccount = require("./serviceAccountKey.json");
-
 //////////////////////////////////////////////////////////////////
-
-admin.initializeApp({
-    credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://test-8a648-default-rtdb.firebaseio.com"
-  });
 
 
 //APP USE
@@ -68,57 +60,55 @@ function generateRefreshToken(user) {
     return token;
 }
 
-// Registration using Firebase Auth
+
+// user creation route to return both tokens
 app.post('/account/create', async (req, res) => {
     try {
-      const { name, email, password } = req.body;
-  
-      // Create user using Firebase Authentication
-      const userRecord = await admin.auth().createUser({
-        email,
-        password,
-        displayName: name,
-      });
-  
-      // Store additional user data in MongoDB
-      const user = await db.create(name, email, userRecord.uid);
-  
-      const shortToken = generateShortToken(user);
-      const refreshToken = generateRefreshToken(user);
-  
-      res.status(201).json({ user, shortToken, refreshToken });
+        const { name, email, password } = req.body;
+
+        const users = await db.find(email);
+
+        if (users.length > 0) {
+            console.log('User already exists');
+            res.status(400).send('User already exists');
+        } else {
+            const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
+            const user = await db.create(name, email, hashedPassword); // Store the hashed password
+            const shortToken = generateShortToken(user);
+            const refreshToken = generateRefreshToken(user);
+            console.log(user);
+            res.status(201).json({ user, shortToken, refreshToken });
+        }
     } catch (error) {
-      console.error(error);
-      res.status(500).send('Internal Server Error');
+        res.status(500).send('Internal Server Error');
     }
-  });
-  
-// Login using Firebase Auth
+});
+
+
+
+//LOGIN
 app.post('/account/login', async (req, res) => {
     try {
-      const { email, password } = req.body;
-  
-      // Authenticate the user with Firebase Authentication
-      const userCredential = await admin
-        .auth()
-        .signInWithEmailAndPassword(email, password);
-  
-      // Get user data from MongoDB
-      const user = await db.findOne(email);
-  
-      if (user) {
-        const shortToken = generateShortToken(user);
-        const refreshToken = generateRefreshToken(user);
-        res.json({ user, shortToken, refreshToken });
-      } else {
-        res.status(401).json({ message: 'Login failed: user not found' });
-      }
+        const { email, password } = req.body;
+        const user = await db.findOne(email);
+
+        if (user) {
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+
+            if (isPasswordValid) {
+                const shortToken = generateShortToken(user);
+                const refreshToken = generateRefreshToken(user);
+                res.json({ user, shortToken, refreshToken });
+            } else {
+                res.status(401).json({ message: 'Login failed: wrong password' });
+            }
+        } else {
+            res.status(401).json({ message: 'Login failed: user not found' });
+        }
     } catch (error) {
-      res.status(401).json({ message: 'Login failed: invalid credentials' });
+        res.status(500).send('Internal Server Error');
     }
-  });
-
-
+});
 
 
 
@@ -156,17 +146,6 @@ app.get('/account/update/:email/:amount', async (req, res) => {
         res.status(500).send('Internal Server Error');
     }
 });
-
-// find one user by email - alternative to find
-app.get("/account/id/:userId", async (req, res) => {
-    try {
-      const user = await db.getUserById(req.params.userId);
-      console.log(user);
-      res.json(user);
-    } catch (error) {
-      res.status(500).send("Internal Server Error");
-    }
-  });
 
 // all accounts
 app.get('/account/all', async (req, res) => {
