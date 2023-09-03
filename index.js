@@ -9,6 +9,7 @@ const cors = require('cors');
 const db = require('./db.js');
 const morgan = require('morgan');
 const bcrypt = require('bcrypt');
+const { requireUser } = require('./authUtils');
 //////////////////////////////////////////////////////////////////
 
 
