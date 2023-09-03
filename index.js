@@ -4,12 +4,24 @@ dotenv.config();
 require("dotenv").config();
 const express = require('express');
 const app = express();
+const authMiddleware = require('./authMiddleware');
 const cors = require('cors');
 const db = require('./db.js');
+const morgan = require('morgan');
+const bcrypt = require('bcrypt');
+//////////////////////////////////////////////////////////////////
 
-// Middleware
+
+//APP USE
+app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json())
+app.use(authMiddleware); 
+
+
+
+
+// HEATH ROUTE
 app.get('/', async (req, res, next) => {
     try {
         res.status(200).json({
@@ -23,43 +35,82 @@ app.get('/', async (req, res, next) => {
 });
 
 
+// ACCESST TOKENS
+const shortExpiry = process.env.short_token; // Example: short-lived token expires after 10 seconds
+const longExpiry = process.env.long_token;   // Example: refresh token expires after 5 hours
 
-// // create user account
-// app.get('/account/create/:name/:email/:password', async (req, res) => {
-//     try {
-//         const users = await db.find(req.params.email);
 
-//         if (users.length > 0) {
-//             console.log('User already exists');
-//             res.send('User already exists');
-//         } else {
-//             const user = await db.create(req.params.name, req.params.email, req.params.password);
-//             console.log(user);
-//             res.send(user);
-//         }
-//     } catch (error) {
-//         res.status(500).send('Internal Server Error');
-//     }
-// });
+// Generate a short-lived access token
+function generateShortToken(user) {
+    const payload = {
+        userId: user.id,
+    };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: shortExpiry });
+    return token;
+}
 
-// login user
-app.get('/account/login/:email/:password', async (req, res) => {
+
+// Generate a long-lived refresh token
+function generateRefreshToken(user) {
+    const payload = {
+        userId: user.id,
+    };
+    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: longExpiry });
+    return token;
+}
+
+
+// user creation route to return both tokens
+app.post('/account/create', async (req, res) => {
     try {
-        const user = await db.find(req.params.email);
+        const { name, email, password } = req.body;
 
-        if (user.length > 0) {
-            if (user[0].password === req.params.password) {
-                res.send(user[0]);
-            } else {
-                res.send('Login failed: wrong password');
-            }
+        const users = await db.find(email);
+
+        if (users.length > 0) {
+            console.log('User already exists');
+            res.status(400).send('User already exists');
         } else {
-            res.send('Login failed: user not found');
+            const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
+            const user = await db.create(name, email, hashedPassword); // Store the hashed password
+            const shortToken = generateShortToken(user);
+            const refreshToken = generateRefreshToken(user);
+            console.log(user);
+            res.status(201).json({ user, shortToken, refreshToken });
         }
     } catch (error) {
         res.status(500).send('Internal Server Error');
     }
 });
+
+
+
+//LOGIN
+app.post('/account/login', async (req, res) => {
+    try {
+        const { email, password } = req.body;
+        const user = await db.findOne(email);
+
+        if (user) {
+            const isPasswordValid = await bcrypt.compare(password, user.password);
+
+            if (isPasswordValid) {
+                const shortToken = generateShortToken(user);
+                const refreshToken = generateRefreshToken(user);
+                res.json({ user, shortToken, refreshToken });
+            } else {
+                res.status(401).json({ message: 'Login failed: wrong password' });
+            }
+        } else {
+            res.status(401).json({ message: 'Login failed: user not found' });
+        }
+    } catch (error) {
+        res.status(500).send('Internal Server Error');
+    }
+});
+
+
+
 
 // find user account
 app.get('/account/find/:email', async (req, res) => {
@@ -106,6 +157,8 @@ app.get('/account/all', async (req, res) => {
     }
 });
 
+
+//PORT 
 const port = process.env.PORT || 3000;
 app.listen(port, function () {
     console.log(`Running on port ${port}`);
