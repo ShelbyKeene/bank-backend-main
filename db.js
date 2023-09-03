@@ -52,6 +52,8 @@ async function findOne(email) {
     }
 }
 
+
+
 // update - deposit/withdraw amount
 async function update(email, amount) {
     try {
@@ -63,6 +65,18 @@ async function update(email, amount) {
                 { returnOriginal: false }
             );
         return documents;
+    } catch (error) {
+        throw error;
+    }
+}
+
+// get user by id
+async function getUserById(userId) {
+    try {
+        const user = await db
+            .collection('users')
+            .findOne({ _id: userId }); 
+        return user;
     } catch (error) {
         throw error;
     }
@@ -81,4 +95,4 @@ async function all() {
     }
 }
 
-module.exports = { create, findOne, find, update, all };
+module.exports = { create, findOne, find, update,getUserById, all };
