@@ -1,7 +1,7 @@
 const MongoClient = require('mongodb').MongoClient;
 
 
-const url = process.env.MONGODB_URI || 'mongodb+srv://shelby:QHnd4CMyqg5lKJga@cluster1.yccoufm.mongodb.net/?retryWrites=true&w=majority';
+const url = process.env.MONGODB_URI || process.env.MongoURI;
 let db = null;
 
 // Connect to MongoDB Atlas with useUnifiedTopology option

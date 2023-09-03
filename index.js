@@ -1,3 +1,6 @@
+const jwt = require('jsonwebtoken');
+const dotenv = require('dotenv');
+dotenv.config();
 require("dotenv").config();
 const express = require('express');
 const app = express();
@@ -6,7 +9,7 @@ const db = require('./db.js');
 
 // Middleware
 app.use(cors());
-
+app.use(express.json())
 app.get('/', async (req, res, next) => {
     try {
         res.status(200).json({
@@ -19,23 +22,25 @@ app.get('/', async (req, res, next) => {
     }
 });
 
-// create user account
-app.get('/account/create/:name/:email/:password', async (req, res) => {
-    try {
-        const users = await db.find(req.params.email);
 
-        if (users.length > 0) {
-            console.log('User already exists');
-            res.send('User already exists');
-        } else {
-            const user = await db.create(req.params.name, req.params.email, req.params.password);
-            console.log(user);
-            res.send(user);
-        }
-    } catch (error) {
-        res.status(500).send('Internal Server Error');
-    }
-});
+
+// // create user account
+// app.get('/account/create/:name/:email/:password', async (req, res) => {
+//     try {
+//         const users = await db.find(req.params.email);
+
+//         if (users.length > 0) {
+//             console.log('User already exists');
+//             res.send('User already exists');
+//         } else {
+//             const user = await db.create(req.params.name, req.params.email, req.params.password);
+//             console.log(user);
+//             res.send(user);
+//         }
+//     } catch (error) {
+//         res.status(500).send('Internal Server Error');
+//     }
+// });
 
 // login user
 app.get('/account/login/:email/:password', async (req, res) => {

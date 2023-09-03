@@ -4,6 +4,7 @@
   "description": "lowdb sample for 1.125",
   "main": "index.js",
   "scripts": {
+    "start:dev": "nodemon index.js",
     "start": "node index.js"
   },
   "author": "",
@@ -12,10 +13,13 @@
     "cors": "^2.8.4",
     "dotenv": "^16.3.1",
     "express": "^4.16.3",
+    "jsonwebtoken": "^9.0.2",
     "lowdb": "^1.0.0",
-    "mongodb": "^3.6.2"
+    "mongodb": "^3.6.2",
+    "morgan": "^1.10.0",
+    "nodemon": "^3.0.1"
   },
   "engines": {
     "node": "14.21.3"
-     }
+  }
 }
