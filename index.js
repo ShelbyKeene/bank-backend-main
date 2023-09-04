@@ -158,6 +158,14 @@ app.get('/account/all', async (req, res) => {
     }
 });
 
+// Retrieve user data using token
+app.get("/me", requireUser, async (req, res, next) => {
+    const user = req.user;
+  
+    res.send(user);
+    next;
+  });
+  
 
 //PORT 
 const port = process.env.PORT || 3000;
