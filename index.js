@@ -114,7 +114,7 @@ app.post('/account/login', async (req, res) => {
 
 
 // find user account
-app.get('/account/find/:email', async (req, res) => {
+app.get('/account/find/:email',requireUser, async (req, res) => {
     try {
         const user = await db.find(req.params.email);
         console.log(user);
@@ -125,7 +125,7 @@ app.get('/account/find/:email', async (req, res) => {
 });
 
 // find one user by email - alternative to find
-app.get('/account/findOne/:email', async (req, res) => {
+app.get('/account/findOne/:email',requireUser, async (req, res) => {
     try {
         const user = await db.findOne(req.params.email);
         console.log(user);
@@ -136,7 +136,7 @@ app.get('/account/findOne/:email', async (req, res) => {
 });
 
 // update - deposit/withdraw amount
-app.get('/account/update/:email/:amount', async (req, res) => {
+app.get('/account/update/:email/:amount', requireUser, async (req, res) => {
     try {
         const amount = Number(req.params.amount);
         const response = await db.update(req.params.email, amount);
@@ -148,7 +148,7 @@ app.get('/account/update/:email/:amount', async (req, res) => {
 });
 
 // all accounts
-app.get('/account/all', async (req, res) => {
+app.get('/account/all',requireUser, async (req, res) => {
     try {
         const docs = await db.all();
         console.log(docs);
@@ -158,6 +158,24 @@ app.get('/account/all', async (req, res) => {
     }
 });
 
+// Retrieve user data using token
+app.get("/me", requireUser, async (req, res, next) => {
+    const user = req.user;
+  
+    res.send(user);
+    next;
+  });
+
+
+ app.get('/account/id/:userId',requireUser, async (req, res) => {
+    try {
+        const user = await db.getUserById(req.params.userId);
+        console.log(user);
+        res.json(user); // Send the user data as JSON response
+    } catch (error) {
+        res.status(500).send('Internal Server Error');
+    }
+});
 
 //PORT 
 const port = process.env.PORT || 3000;

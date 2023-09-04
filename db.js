@@ -1,4 +1,5 @@
 const MongoClient = require('mongodb').MongoClient;
+const { ObjectId } = require('mongodb'); 
 
 
 const url = process.env.MONGODB_URI || process.env.MongoURI;
@@ -75,12 +76,13 @@ async function getUserById(userId) {
     try {
         const user = await db
             .collection('users')
-            .findOne({ _id: userId }); 
+            .findOne({ _id: ObjectId(userId) }); 
         return user;
     } catch (error) {
         throw error;
     }
 }
+
 
 // all users
 async function all() {
