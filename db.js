@@ -1,6 +1,6 @@
 const MongoClient = require('mongodb').MongoClient;
 const { ObjectId } = require('mongodb'); 
-
+const bcrypt = require('bcrypt');
 
 const url = process.env.MONGODB_URI || process.env.MongoURI;
 let db = null;
@@ -20,7 +20,9 @@ let db = null;
 async function create(name, email, password) {
     try {
         const collection = db.collection('users');
-        const doc = { name, email, password, balance: 0 };
+        // Hash the user's password
+        const hashedPassword = await bcrypt.hash(password, 10); //adjust the salt rounds as needed
+        const doc = { name, email, password: hashedPassword, balance: 0 };
         const result = await collection.insertOne(doc);
         return doc;
     } catch (error) {
