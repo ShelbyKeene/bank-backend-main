@@ -67,27 +67,24 @@ function generateAccessToken(user) {
 
 //Register
 app.post("/account/create", async (req, res) => {
-  try {
-    const { name, email, password, pin } = req.body;
+    try {
+        const { name, email, password, pin } = req.body;
+        const users = await db.find(email);
 
-    const users = await db.find(email);
-
-    if (users.length > 0) {
-      console.log("User already exists");
-      res.status(400).send("User already exists");
-    } else {
-      const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
-      const hashedPin = await bcrypt.hash(pin.toString(), 10); // Hash the PIN
-
-      const user = await db.create(name, email, hashedPassword, hashedPin); // Store the hashed password and PIN
-      const accessToken = generateAccessToken(user); // Generate a single access token
-      res.status(201).json({ user, accessToken });
+        if (users.length > 0) {
+            console.log("User already exists");
+            res.status(400).send("User already exists");
+        } else {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const user = await db.create(name, email, hashedPassword, pin); // Include the PIN when creating the user
+            const accessToken = generateAccessToken(user);
+            res.status(201).json({ user, accessToken });
+        }
+    } catch (error) {
+        console.error("Error creating user:", error);
+        res.status(500).send("Internal Server Error");
     }
-  } catch (error) {
-    res.status(500).send("Internal Server Error");
-  }
 });
-
 
 
 

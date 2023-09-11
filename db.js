@@ -21,8 +21,7 @@ async function create(name, email, password, pin) {
     try {
         const collection = db.collection('users');
         const hashedPassword = await bcrypt.hash(password, 10);
-        const hashedPin = await bcrypt.hash(pin.toString(), 10);
-        const doc = { name, email, password: hashedPassword, pin:hashedPin, balance: 0  };
+        const doc = { name, email, password: hashedPassword, balance: 0, pin };
         const result = await collection.insertOne(doc);
         return doc;
     } catch (error) {
