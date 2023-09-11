@@ -76,7 +76,7 @@ app.post('/account/create', async (req, res) => {
             const user = await db.create(name, email, hashedPassword); // Store the hashed password
             const shortToken = generateShortToken(user);
             const refreshToken = generateRefreshToken(user);
-            console.log(user);
+          
             res.status(201).json({ user, shortToken, refreshToken });
         }
     } catch (error) {
@@ -117,7 +117,6 @@ app.post('/account/login', async (req, res) => {
 app.get('/account/find/:email', async (req, res) => {
     try {
         const user = await db.find(req.params.email);
-        console.log(user);
         res.send(user);
     } catch (error) {
         res.status(500).send('Internal Server Error');
@@ -128,7 +127,6 @@ app.get('/account/find/:email', async (req, res) => {
 app.get('/account/findOne/:email', async (req, res) => {
     try {
         const user = await db.findOne(req.params.email);
-        console.log(user);
         res.send(user);
     } catch (error) {
         res.status(500).send('Internal Server Error');
@@ -140,7 +138,6 @@ app.get('/account/update/:email/:amount',  async (req, res) => {
     try {
         const amount = Number(req.params.amount);
         const response = await db.update(req.params.email, amount);
-        console.log(response);
         res.send(response);
     } catch (error) {
         res.status(500).send('Internal Server Error');
@@ -151,7 +148,6 @@ app.get('/account/update/:email/:amount',  async (req, res) => {
 app.get('/account/all', async (req, res) => {
     try {
         const docs = await db.all();
-        console.log(docs);
         res.send(docs);
     } catch (error) {
         res.status(500).send('Internal Server Error');
@@ -161,7 +157,6 @@ app.get('/account/all', async (req, res) => {
 // Retrieve user data using token
 app.get("/me", async (req, res, next) => {
     const user = req.user;
-  
     res.send(user);
     next;
   });
@@ -170,7 +165,6 @@ app.get("/me", async (req, res, next) => {
  app.get('/account/id/:userId', async (req, res) => {
     try {
         const user = await db.getUserById(req.params.userId);
-        console.log(user);
         res.json(user); // Send the user data as JSON response
     } catch (error) {
         res.status(500).send('Internal Server Error');
