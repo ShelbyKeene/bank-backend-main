@@ -17,18 +17,19 @@ let db = null;
 })();
 
 // create user account
-async function create(name, email, password) {
+async function create(name, email, password, pin) {
     try {
         const collection = db.collection('users');
-        // Hash the user's password
-        const hashedPassword = await bcrypt.hash(password, 10); //adjust the salt rounds as needed
-        const doc = { name, email, password: hashedPassword, balance: 0 };
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const hashedPin = await bcrypt.hash(pin.toString(), 10);
+        const doc = { name, email, password: hashedPassword, pin:hashedPin, balance: 0  };
         const result = await collection.insertOne(doc);
         return doc;
     } catch (error) {
         throw error;
     }
 }
+
 
 // find user account
 async function find(email) {

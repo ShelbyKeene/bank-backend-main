@@ -68,7 +68,7 @@ function generateAccessToken(user) {
 //Register
 app.post("/account/create", async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, pin } = req.body;
 
     const users = await db.find(email);
 
@@ -77,7 +77,9 @@ app.post("/account/create", async (req, res) => {
       res.status(400).send("User already exists");
     } else {
       const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
-      const user = await db.create(name, email, hashedPassword); // Store the hashed password
+      const hashedPin = await bcrypt.hash(pin.toString(), 10); // Hash the PIN
+
+      const user = await db.create(name, email, hashedPassword, hashedPin); // Store the hashed password and PIN
       const accessToken = generateAccessToken(user); // Generate a single access token
       res.status(201).json({ user, accessToken });
     }
@@ -85,6 +87,8 @@ app.post("/account/create", async (req, res) => {
     res.status(500).send("Internal Server Error");
   }
 });
+
+
 
 
 //Get ME Endpoint
@@ -95,7 +99,28 @@ app.get('/me', async (req, res, next) => {
 
 });
 
-
+app.post("/account/check-pin", async (req, res) => {
+    try {
+      const { email, pin } = req.body;
+      const user = await db.findOne(email);
+  
+      if (!user) {
+        res.status(404).json({ message: "User not found" });
+        return;
+      }
+  
+      // Compare the provided PIN with the user's stored PIN
+      if (pin === user.pin) {
+        res.json({ balance: user.balance });
+      } else {
+        res.status(401).json({ message: "PIN does not match" });
+      }
+    } catch (error) {
+      console.error("Error checking PIN:", error);
+      res.status(500).send("Internal Server Error");
+    }
+  });
+  
 
 //LOGIN
 app.post("/account/login", async (req, res) => {
