@@ -1,4 +1,5 @@
-const jwt = require('jsonwebtoken');
+// const jwt = require('jsonwebtoken');
+const admin = require('firebase-admin');
 const dotenv = require('dotenv');
 dotenv.config();
 require("dotenv").config();
@@ -12,6 +13,12 @@ const bcrypt = require('bcrypt');
 const { requireUser } = require('./authUtils');
 //////////////////////////////////////////////////////////////////
 
+// Initialize Firebase Admin SDK
+const serviceAccount = require('./authJSON.json'); // Replace with your service account key
+admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: 'https://test-8a648-default-rtdb.firebaseio.com' // Replace with your Firebase project URL
+});
 
 //APP USE
 app.use(morgan('dev'));
@@ -19,6 +26,28 @@ app.use(cors());
 app.use(express.json())
 app.use(authMiddleware); 
 
+
+// Authentication route for token verification (unchanged)
+app.get('/auth', function (req, res) {
+  // read token from header
+  const idToken = req.headers.authorization;
+  console.log('header:', idToken);
+
+  if (!idToken) {
+      res.status(401).send();
+      return;
+  }
+
+  // verify token, is this token valid?
+  admin.auth().verifyIdToken(idToken)
+      .then(function (decodedToken) {
+          console.log('decodedToken:', decodedToken);
+          res.send('Authentication Success!');
+      }).catch(function (error) {
+          console.log('error:', error);
+          res.status(401).send('Token invalid!');
+      });
+});
 
 
 
@@ -36,79 +65,56 @@ app.get('/', async (req, res, next) => {
 });
 
 
-// ACCESST TOKENS
-const shortExpiry = process.env.short_token; // Example: short-lived token expires after 10 seconds
-const longExpiry = process.env.long_token;   // Example: refresh token expires after 5 hours
 
 
-// Generate a short-lived access token
-function generateShortToken(user) {
-    const payload = {
-        userId: user.id,
-    };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: shortExpiry });
-    return token;
-}
-
-
-// Generate a long-lived refresh token
-function generateRefreshToken(user) {
-    const payload = {
-        userId: user.id,
-    };
-    const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: longExpiry });
-    return token;
-}
-
-
-// user creation route to return both tokens
+// Create user account using Firebase Authentication and store user data in MongoDB
 app.post('/account/create', async (req, res) => {
-    try {
-        const { name, email, password } = req.body;
+  try {
+      const { name, email, password } = req.body;
 
-        const users = await db.find(email);
-
-        if (users.length > 0) {
-            console.log('User already exists');
-            res.status(400).send('User already exists');
-        } else {
-            const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
-            const user = await db.create(name, email, hashedPassword); // Store the hashed password
-            const shortToken = generateShortToken(user);
-            const refreshToken = generateRefreshToken(user);
+      // Create the user in Firebase Authentication
+      admin.auth().createUser({
+          displayName: name,
+          email: email,
+          password: password
+      }).then(async (userRecord) => {
+          const { uid } = userRecord;
           
-            res.status(201).json({ user, shortToken, refreshToken });
-        }
-    } catch (error) {
-        res.status(500).send('Internal Server Error');
-    }
+          // Store user data in MongoDB
+          const hashedPassword = await bcrypt.hash(password, 10);
+          await db.create(name, email, hashedPassword, uid);
+
+          res.status(201).json({ user: userRecord });
+      }).catch((error) => {
+          console.error('Firebase Authentication Error:', error);
+          res.status(500).send('Internal Server Error');
+      });
+  } catch (error) {
+      console.error('Error:', error);
+      res.status(500).send('Internal Server Error');
+  }
 });
 
+// // Log in user using Firebase Authentication
+// app.post('/account/login', async (req, res) => {
+//   try {
+//       const { email, password } = req.body;
 
-
-//LOGIN
-app.post('/account/login', async (req, res) => {
-    try {
-        const { email, password } = req.body;
-        const user = await db.findOne(email);
-
-        if (user) {
-            const isPasswordValid = await bcrypt.compare(password, user.password);
-
-            if (isPasswordValid) {
-                const shortToken = generateShortToken(user);
-                const refreshToken = generateRefreshToken(user);
-                res.json({ user, shortToken, refreshToken });
-            } else {
-                res.status(401).json({ message: 'Login failed: wrong password' });
-            }
-        } else {
-            res.status(401).json({ message: 'Login failed: user not found' });
-        }
-    } catch (error) {
-        res.status(500).send('Internal Server Error');
-    }
-});
+//       // Sign in the user with Firebase Authentication
+//       admin.auth().signInWithEmailAndPassword(email, password)
+//           .then((userCredential) => {
+//               const user = userCredential.user;
+//               res.json({ user });
+//           })
+//           .catch((error) => {
+//               console.error('Firebase Authentication Error:', error);
+//               res.status(401).json({ message: 'Login failed: ' + error.message });
+//           });
+//   } catch (error) {
+//       console.error('Error:', error);
+//       res.status(500).send('Internal Server Error');
+//   }
+// });
 
 
 
