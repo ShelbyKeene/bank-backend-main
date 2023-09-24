@@ -83,7 +83,7 @@ app.post('/account/create', async (req, res) => {
 
 
 // find user account
-app.get('/account/find/:email', requireUser, async (req, res) => {
+app.get('/account/find/:email',  async (req, res) => {
     try {
         const user = await db.find(req.params.email);
         res.send(user);
@@ -94,7 +94,7 @@ app.get('/account/find/:email', requireUser, async (req, res) => {
 
 
 // find one user by email - alternative to find
-app.get('/account/findOne/:email',requireUser, async (req, res) => {
+app.get('/account/findOne/:email', async (req, res) => {
     try {
         const user = await db.findOne(req.params.email);
         res.send(user);
