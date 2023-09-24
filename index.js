@@ -5,7 +5,7 @@ dotenv.config();
 require("dotenv").config();
 const express = require('express');
 const app = express();
-const authMiddleware = require('./authMiddleware');
+// const authMiddleware = require('./authMiddleware');
 const cors = require('cors');
 const db = require('./db.js');
 const morgan = require('morgan');
@@ -24,30 +24,11 @@ admin.initializeApp({
 app.use(morgan('dev'));
 app.use(cors());
 app.use(express.json())
-app.use(authMiddleware); 
+// app.use(verifyToken); 
 
 
-// Authentication route for token verification (unchanged)
-app.get('/auth', function (req, res) {
-  // read token from header
-  const idToken = req.headers.authorization;
-  console.log('header:', idToken);
 
-  if (!idToken) {
-      res.status(401).send();
-      return;
-  }
-
-  // verify token, is this token valid?
-  admin.auth().verifyIdToken(idToken)
-      .then(function (decodedToken) {
-          console.log('decodedToken:', decodedToken);
-          res.send('Authentication Success!');
-      }).catch(function (error) {
-          console.log('error:', error);
-          res.status(401).send('Token invalid!');
-      });
-});
+  
 
 
 
@@ -64,29 +45,7 @@ app.get('/', async (req, res, next) => {
     }
 });
 
-// Handle the POST request to store user data
-app.post('/store', async (req, res) => {
-    try {
-      const { email } = req.body;
-  
-      // Check if the user with this email already exists in the database
-      const existingUser = await findOne(email);
-  
-      if (existingUser) {
-        // User already exists, no need to create a new one
-        res.status(200).json({ message: "User already exists in the database." });
-      } else {
-        // User doesn't exist, create a new user with initial balance 0
-        const newUser = await db.create(email, 0); // Pass balance as 0
-  
-        res.status(201).json({ message: "User data stored successfully.", user: newUser });
-      }
-    } catch (error) {
-      console.error("Error:", error);
-      res.status(500).send("Internal Server Error");
-    }
-  });
-  
+
   
 
 
@@ -118,32 +77,13 @@ app.post('/account/create', async (req, res) => {
   }
 });
 
-// // Log in user using Firebase Authentication
-// app.post('/account/login', async (req, res) => {
-//   try {
-//       const { email, password } = req.body;
 
-//       // Sign in the user with Firebase Authentication
-//       admin.auth().signInWithEmailAndPassword(email, password)
-//           .then((userCredential) => {
-//               const user = userCredential.user;
-//               res.json({ user });
-//           })
-//           .catch((error) => {
-//               console.error('Firebase Authentication Error:', error);
-//               res.status(401).json({ message: 'Login failed: ' + error.message });
-//           });
-//   } catch (error) {
-//       console.error('Error:', error);
-//       res.status(500).send('Internal Server Error');
-//   }
-// });
 
 
 
 
 // find user account
-app.get('/account/find/:email', async (req, res) => {
+app.get('/account/find/:email', requireUser, async (req, res) => {
     try {
         const user = await db.find(req.params.email);
         res.send(user);
@@ -152,8 +92,9 @@ app.get('/account/find/:email', async (req, res) => {
     }
 });
 
+
 // find one user by email - alternative to find
-app.get('/account/findOne/:email', async (req, res) => {
+app.get('/account/findOne/:email',requireUser, async (req, res) => {
     try {
         const user = await db.findOne(req.params.email);
         res.send(user);
@@ -162,8 +103,9 @@ app.get('/account/findOne/:email', async (req, res) => {
     }
 });
 
+
 // update - deposit/withdraw amount
-app.get('/account/update/:email/:amount',  async (req, res) => {
+app.get('/account/update/:email/:amount', requireUser, async (req, res) => {
     try {
         const amount = Number(req.params.amount);
         const response = await db.update(req.params.email, amount);
@@ -173,8 +115,9 @@ app.get('/account/update/:email/:amount',  async (req, res) => {
     }
 });
 
+
 // all accounts
-app.get('/account/all', async (req, res) => {
+app.get('/account/all',requireUser, async (req, res) => {
     try {
         const docs = await db.all();
         res.send(docs);
@@ -183,15 +126,17 @@ app.get('/account/all', async (req, res) => {
     }
 });
 
+
 // Retrieve user data using token
-app.get("/me", async (req, res, next) => {
+app.get("/me",requireUser, async (req, res, next) => {
     const user = req.user;
     res.send(user);
     next;
   });
 
 
- app.get('/account/id/:userId', async (req, res) => {
+  // get a user by ID
+ app.get('/account/id/:userId',requireUser, async (req, res) => {
     try {
         const user = await db.getUserById(req.params.userId);
         res.json(user); // Send the user data as JSON response
