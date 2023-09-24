@@ -105,7 +105,7 @@ app.get('/account/findOne/:email',requireUser, async (req, res) => {
 
 
 // update - deposit/withdraw amount
-app.get('/account/update/:email/:amount', requireUser, async (req, res) => {
+app.get('/account/update/:email/:amount', async (req, res) => {
     try {
         const amount = Number(req.params.amount);
         const response = await db.update(req.params.email, amount);
@@ -127,12 +127,12 @@ app.get('/account/all',requireUser, async (req, res) => {
 });
 
 
-// Retrieve user data using token
-app.get("/me",requireUser, async (req, res, next) => {
-    const user = req.user;
-    res.send(user);
-    next;
-  });
+// // Retrieve user data using token
+// app.get("/me",requireUser, async (req, res, next) => {
+//     const user = req.user;
+//     res.send(user);
+//     next;
+//   });
 
 
   // get a user by ID
