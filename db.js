@@ -17,7 +17,7 @@ let db = null;
 })();
 
 // create user account
-async function create(name, email, password) {
+async function create(name, email, password,) {
     try {
         const collection = db.collection('users');
         const doc = { name, email, password, balance: 0 };
