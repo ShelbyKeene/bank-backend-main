@@ -64,7 +64,30 @@ app.get('/', async (req, res, next) => {
     }
 });
 
-
+// Handle the POST request to store user data
+app.post('/store', async (req, res) => {
+    try {
+      const { email } = req.body;
+  
+      // Check if the user with this email already exists in the database
+      const existingUser = await findOne(email);
+  
+      if (existingUser) {
+        // User already exists, no need to create a new one
+        res.status(200).json({ message: "User already exists in the database." });
+      } else {
+        // User doesn't exist, create a new user with initial balance 0
+        const newUser = await db.create(email, 0); // Pass balance as 0
+  
+        res.status(201).json({ message: "User data stored successfully.", user: newUser });
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).send("Internal Server Error");
+    }
+  });
+  
+  
 
 
 // Create user account using Firebase Authentication and store user data in MongoDB
