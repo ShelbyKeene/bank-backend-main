@@ -5,7 +5,6 @@ dotenv.config();
 require("dotenv").config();
 const express = require('express');
 const app = express();
-// const authMiddleware = require('./authMiddleware');
 const cors = require('cors');
 const db = require('./db.js');
 const morgan = require('morgan');
