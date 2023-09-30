@@ -5,12 +5,11 @@ dotenv.config();
 require("dotenv").config();
 const express = require('express');
 const app = express();
-// const authMiddleware = require('./authMiddleware');
 const cors = require('cors');
 const db = require('./db.js');
 const morgan = require('morgan');
 const bcrypt = require('bcrypt');
-const { requireUser } = require('./authUtils');
+const { requireAuth } = require('./authUtils');
 //////////////////////////////////////////////////////////////////
 
 // Initialize Firebase Admin SDK
@@ -83,7 +82,7 @@ app.post('/account/create', async (req, res) => {
 
 
 // find user account
-app.get('/account/find/:email',  async (req, res) => {
+app.get('/account/find/:email', requireAuth, async (req, res) => {
     try {
         const user = await db.find(req.params.email);
         res.send(user);
@@ -94,7 +93,7 @@ app.get('/account/find/:email',  async (req, res) => {
 
 
 // find one user by email - alternative to find
-app.get('/account/findOne/:email', async (req, res) => {
+app.get('/account/findOne/:email',requireAuth, async (req, res) => {
     try {
         const user = await db.findOne(req.params.email);
         res.send(user);
@@ -105,7 +104,7 @@ app.get('/account/findOne/:email', async (req, res) => {
 
 
 // update - deposit/withdraw amount
-app.get('/account/update/:email/:amount', async (req, res) => {
+app.get('/account/update/:email/:amount',requireAuth, async (req, res) => {
     try {
         const amount = Number(req.params.amount);
         const response = await db.update(req.params.email, amount);
@@ -117,7 +116,7 @@ app.get('/account/update/:email/:amount', async (req, res) => {
 
 
 // all accounts
-app.get('/account/all',requireUser, async (req, res) => {
+app.get('/account/all',requireAuth, async (req, res) => {
     try {
         const docs = await db.all();
         res.send(docs);
@@ -136,7 +135,7 @@ app.get('/account/all',requireUser, async (req, res) => {
 
 
   // get a user by ID
- app.get('/account/id/:userId',requireUser, async (req, res) => {
+ app.get('/account/id/:userId',requireAuth, async (req, res) => {
     try {
         const user = await db.getUserById(req.params.userId);
         res.json(user); // Send the user data as JSON response
